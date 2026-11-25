@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Radiqualiser.Check/Radiqualiser.Check.csproj" />
+    <Project Path="src/Radiqualiser.Core/Radiqualiser.Core.csproj" />
+    <Project Path="src/Radiqualiser/Radiqualiser.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,349 @@
+﻿<Window x:Class="Radiqualiser.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="clr-namespace:Radiqualiser.Controls"
+        Title="Radiqualiser" Width="1260" Height="960" MinWidth="1140" MinHeight="840"
+        Background="{StaticResource Bg}" Foreground="{StaticResource Text}" FontSize="12.5" Icon="/Assets/radiqualiser.ico"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+    <Grid x:Name="Root" Background="{StaticResource Bg}">
+        <Grid Margin="14,12,14,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- header -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="False">
+                <ToggleButton DockPanel.Dock="Left" IsChecked="{Binding Power}" Content="Power" Tag="{StaticResource Good}" MinWidth="86"
+                              ToolTip="On: everything Windows plays is routed through Radiqualiser. Off: Windows plays straight to your normal output, untouched."/>
+                <ToggleButton DockPanel.Dock="Left" IsChecked="{Binding Bypass}" Content="Bypass" Tag="{StaticResource Danger}" Margin="8,0,0,0" MinWidth="86"
+                              ToolTip="Hear the unprocessed sound for comparison. Audio keeps flowing; the EQ and every effect are skipped."/>
+
+                <Border DockPanel.Dock="Left" Width="1" Background="{StaticResource Line}" Margin="16,4,16,4"/>
+                <ToggleButton DockPanel.Dock="Left" IsChecked="{Binding SweepOn}" Content="Sweep" Tag="{StaticResource Cool}" MinWidth="86"
+                              ToolTip="Plays a pure tone that glides from 20 Hz to 20 kHz and repeats, in place of the normal audio. It runs through the EQ and valve stage, so you hear your settings; a blue marker on the graph shows where it is, and you can drag the handle at the top of the marker to move the tone by hand. Needs Power on. The level is fixed at −20 dB: set loudness with your normal volume control."/>
+                <ToggleButton DockPanel.Dock="Left" IsChecked="{Binding SweepHold}" IsEnabled="{Binding SweepOn}" Content="Hold" Tag="{StaticResource Cool}" Margin="8,0,0,0" MinWidth="74"
+                              ToolTip="Park the tone on the frequency it has reached, e.g. to add an EQ point exactly there. Dragging the handle on the graph switches this on by itself. Release to carry on sweeping from there."/>
+                <TextBlock DockPanel.Dock="Left" Text="slow" Style="{StaticResource Dim}" FontSize="11.5" Margin="14,0,6,0"/>
+                <Slider DockPanel.Dock="Left" Width="96" Minimum="0" Maximum="100" Value="{Binding SweepSpeed}" Tag="50" SmallChange="1" LargeChange="10"
+                        Foreground="{StaticResource Cool}" ToolTip="Sweep speed: how long one pass from 20 Hz to 20 kHz takes."/>
+                <TextBlock DockPanel.Dock="Left" Text="fast" Style="{StaticResource Dim}" FontSize="11.5" Margin="6,0,0,0"/>
+                <TextBlock DockPanel.Dock="Left" Text="{Binding SweepText}" Style="{StaticResource Dim}" FontSize="11.5" Margin="10,0,0,0"/>
+
+                <Button DockPanel.Dock="Right" Content="Delete" Click="DeletePreset_Click" IsEnabled="{Binding CanDeletePreset}" Margin="6,0,0,0"
+                        ToolTip="Deletes the selected preset for good. This includes the ones Radiqualiser came with."/>
+                <Button DockPanel.Dock="Right" Content="Save as…" Click="SavePreset_Click" Margin="6,0,0,0"
+                        ToolTip="Saves the current settings as a new preset under a name you choose."/>
+                <Button DockPanel.Dock="Right" Content="Save" Click="SaveNow_Click" Margin="6,0,0,0"
+                        ToolTip="Saves the current settings over the selected preset. If no preset is selected yet, it asks for a name."/>
+                <ComboBox DockPanel.Dock="Right" Width="176" ItemsSource="{Binding PresetNames}" SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding PresetStatus}" Foreground="{StaticResource Accent}" FontSize="11.5" Margin="0,0,8,0"
+                           ToolTip="The settings have changed since this preset was loaded or saved."/>
+                <TextBlock DockPanel.Dock="Right" Text="Preset" Style="{StaticResource Dim}" Margin="0,0,9,0"/>
+            </DockPanel>
+
+            <!-- EQ graph -->
+            <c:EqGraph x:Name="Graph" Grid.Row="1" MinHeight="200"/>
+
+            <!-- selected point -->
+            <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,10,0,0" Padding="14,9">
+                <DockPanel LastChildFill="False">
+                    <ToggleButton DockPanel.Dock="Left" IsChecked="{Binding EqEnabled}" Content="EQ" MinWidth="64"
+                                  ToolTip="Switch the whole equaliser in or out."/>
+                    <Button DockPanel.Dock="Left" Content="+ Add point" Click="AddBand_Click" Margin="8,0,18,0"
+                            ToolTip="Adds a point on the line, in the widest gap between existing points, without changing the shape. You can also double-click the graph."/>
+
+                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" IsEnabled="{Binding HasSelection}" x:Name="BandEditor">
+                        <TextBlock Text="Freq" Style="{StaticResource Dim}" Margin="0,0,6,0"/>
+                        <TextBox Width="76" Text="{Binding SelectedBand.Freq, StringFormat=0.#, UpdateSourceTrigger=LostFocus}" KeyDown="Field_KeyDown"/>
+                        <TextBlock Text="Hz" Style="{StaticResource Dim}" Margin="5,0,0,0"/>
+                        <TextBlock Text="Gain" Style="{StaticResource Dim}" Margin="14,0,6,0"/>
+                        <TextBox Width="62" Text="{Binding SelectedBand.GainDb, StringFormat=0.0#, UpdateSourceTrigger=LostFocus}" KeyDown="Field_KeyDown"/>
+                        <TextBlock Text="dB" Style="{StaticResource Dim}" Margin="5,0,0,0"/>
+                        <Button Content="Zero" Click="ZeroBand_Click" Margin="12,0,0,0" ToolTip="Sets the selected point, or all selected points, to 0 dB."/>
+                        <CheckBox Content="On" IsChecked="{Binding SelectedBand.Enabled}" Margin="14,0,0,0"
+                                  ToolTip="Untick to take this point out of the line without deleting it."/>
+                        <Button Content="Delete" Click="DeleteBand_Click" Margin="14,0,0,0" ToolTip="Deletes the selected point, or all selected points."/>
+                    </StackPanel>
+
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding EqRoundingText}" Style="{StaticResource ValueText}" Width="56"/>
+                    <TextBlock DockPanel.Dock="Right" Text="smooth" Style="{StaticResource Dim}" FontSize="11.5" Margin="6,0,0,0"/>
+                    <Slider DockPanel.Dock="Right" Width="130" Minimum="0" Maximum="100" Value="{Binding EqRounding}" Tag="100" SmallChange="1" LargeChange="10"
+                            ToolTip="How the line travels between your points. Left: straight segments with sharp corners. Right: a smooth curve. Either way the line passes exactly through every point, never swings beyond them, and runs flat outside the first and last points."/>
+                    <TextBlock DockPanel.Dock="Right" Text="straight" Style="{StaticResource Dim}" FontSize="11.5" Margin="0,0,6,0"/>
+                    <TextBlock DockPanel.Dock="Right" Text="Line" Style="{StaticResource Dim}" Margin="0,0,10,0"/>
+                </DockPanel>
+            </Border>
+
+            <!-- bottom panels -->
+            <Grid Grid.Row="3" Margin="0,10,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="236"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="306"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- levels -->
+                <Border Grid.Column="0" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,8" LastChildFill="False">
+                            <TextBlock DockPanel.Dock="Left" Text="Levels" Style="{StaticResource Heading}"/>
+                            <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding AutoLevel}" Content="Auto" Height="24" MinWidth="66"
+                                          ToolTip="Automatic level: keeps the processed sound as loud as the unprocessed sound (so EQ and valve changes alter the tone, not the volume) and backs off just enough to keep peaks under full scale, so nothing clips and the limiter stays idle. It settles within a couple of seconds of any change. Turn it off to set Preamp and Output by hand."/>
+                        </DockPanel>
+
+                        <DockPanel IsEnabled="{Binding ManualLevels}" ToolTip="Manual only (Auto off). Gain before the EQ and valve stage. If you boost with the EQ, pull this down by about the same amount to leave headroom. It also changes how hard the valve stage is driven. Double-click to reset.">
+                            <TextBlock DockPanel.Dock="Left" Text="Preamp" Width="54"/>
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding PreampText}" Style="{StaticResource ValueText}" Width="62"/>
+                            <Slider Minimum="-24" Maximum="12" Value="{Binding PreampDb}" Tag="0" SmallChange="0.5" LargeChange="1"/>
+                        </DockPanel>
+                        <DockPanel Margin="0,4,0,0" IsEnabled="{Binding ManualLevels}" ToolTip="Manual only (Auto off). Gain after the valve stage, before the limiter. Double-click to reset.">
+                            <TextBlock DockPanel.Dock="Left" Text="Output" Width="54"/>
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding OutputText}" Style="{StaticResource ValueText}" Width="62"/>
+                            <Slider Minimum="-24" Maximum="12" Value="{Binding OutputDb}" Tag="0" SmallChange="0.5" LargeChange="1"/>
+                        </DockPanel>
+
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="54"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="18"/>
+                                <RowDefinition Height="18"/>
+                                <RowDefinition Height="18"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="In" Style="{StaticResource Dim}"/>
+                            <c:MeterBar Grid.Row="0" Grid.Column="1" Height="6" Value="{Binding InDb}" Minimum="-60" Maximum="0" Fill="{StaticResource Cool}"/>
+                            <TextBlock Grid.Row="1" Text="Out" Style="{StaticResource Dim}"/>
+                            <c:MeterBar Grid.Row="1" Grid.Column="1" Height="6" Value="{Binding OutDb}" Minimum="-60" Maximum="0" Fill="{StaticResource Good}" HotFrom="-0.6"/>
+                            <TextBlock Grid.Row="2" Text="Limiter" Style="{StaticResource Dim}"
+                                       ToolTip="The limiter catches peaks that would otherwise clip. It should mostly sit idle; if this bar is busy, lower Preamp or Output."/>
+                            <c:MeterBar Grid.Row="2" Grid.Column="1" Height="6" Value="{Binding GrDb}" Minimum="0" Maximum="12" Fill="{StaticResource Danger}"/>
+                        </Grid>
+<TextBlock Style="{StaticResource Dim}" FontSize="11.5" Margin="0,8,0,0" TextWrapping="Wrap" Text="{Binding LevelText}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- valve -->
+                <Border Grid.Column="2" Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="11*" MinWidth="250"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="9*" MaxWidth="360"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <DockPanel Margin="0,0,0,8" LastChildFill="False">
+                                <TextBlock DockPanel.Dock="Left" Text="Valve stage" Style="{StaticResource Heading}"/>
+                                <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding TubeEnabled}" Content="On" Height="24" MinWidth="58"
+                                              ToolTip="Switches the whole valve section in and out, for a quick before/after."/>
+                            </DockPanel>
+                            <StackPanel IsEnabled="{Binding TubeEnabled}">
+                                <DockPanel ToolTip="How hard the music is pushed into the valve curve. 0 is clean. Around 20–40% is what a real hi-fi valve amp does: a little extra richness that grows on loud passages. Past half-way it thickens and squashes like an amp being overdriven; the top of the range is outright fuzz. Double-click to reset.">
+                                    <TextBlock DockPanel.Dock="Left" Text="Drive" Width="82"/>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding DriveText}" Style="{StaticResource ValueText}" Width="104"/>
+                                    <Slider Minimum="0" Maximum="100" Value="{Binding Drive}" Tag="30" SmallChange="1" LargeChange="5"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,3,0,0" ToolTip="Which harmonics are added. Left = push-pull: both halves of the wave are squashed equally, giving odd harmonics (3rd, 5th), tighter and punchier. Right = single-ended triode: one half is squashed sooner, adding the 2nd harmonic (an octave up), the classic 'warm' sound.">
+                                    <TextBlock DockPanel.Dock="Left" Text="Character" Width="82"/>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding CharacterText}" Style="{StaticResource ValueText}" Width="104"/>
+                                    <Slider Minimum="0" Maximum="100" Value="{Binding Character}" Tag="60" SmallChange="1" LargeChange="5"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,3,0,0" ToolTip="Negative feedback: the amp compares its output with its input and corrects the difference, as most valve amps do. None = loose and rich, distortion growing gradually with level. Lots = tighter and cleaner at normal levels, but when pushed too far it clips suddenly and harshly instead of gently. Works against Drive: at low Drive, more feedback simply means less colour.">
+                                    <TextBlock DockPanel.Dock="Left" Text="Feedback" Width="82"/>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding FeedbackText}" Style="{StaticResource ValueText}" Width="104"/>
+                                    <Slider Minimum="0" Maximum="100" Value="{Binding Feedback}" Tag="0" SmallChange="1" LargeChange="5"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,3,0,0" ToolTip="Output transformer behaviour: bass is driven harder into the valve curve (it thickens and compresses first) and the extreme treble is gently rolled off.">
+                                    <TextBlock DockPanel.Dock="Left" Text="Transformer" Width="82"/>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding TransformerText}" Style="{StaticResource ValueText}" Width="104"/>
+                                    <Slider Minimum="0" Maximum="100" Value="{Binding Transformer}" Tag="30" SmallChange="1" LargeChange="5"/>
+                                </DockPanel>
+                            </StackPanel>
+                        </StackPanel>
+                        <DockPanel Grid.Column="2">
+                            <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Dim}" FontSize="11" Margin="0,5,0,0" TextWrapping="Wrap"
+                                       Text="Left: valve curve (in → out). Right: harmonics added to a pure tone at −12 dB, in dB below the tone. Amber = even, blue = odd."/>
+                            <c:HarmonicsView x:Name="Harmonics" MinHeight="110"/>
+                        </DockPanel>
+                    </Grid>
+                </Border>
+
+                <!-- system -->
+                <Border Grid.Column="4" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,8" LastChildFill="False">
+                            <TextBlock DockPanel.Dock="Left" Text="Routing" Style="{StaticResource Heading}"/>
+                            <Button DockPanel.Dock="Right" Content="Rescan" Click="Rescan_Click" Height="24" Padding="10,0"/>
+                        </DockPanel>
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Left" Text="From" Width="42" Style="{StaticResource Dim}"/>
+                            <ComboBox ItemsSource="{Binding Sources}" SelectedItem="{Binding SelectedSource, Mode=TwoWay}" DisplayMemberPath="Name"
+                                      ToolTip="Where Radiqualiser picks the audio up: the virtual cable's output."/>
+                        </DockPanel>
+                        <DockPanel Margin="0,6,0,0">
+                            <TextBlock DockPanel.Dock="Left" Text="To" Width="42" Style="{StaticResource Dim}"/>
+                            <ComboBox ItemsSource="{Binding Outputs}" SelectedItem="{Binding SelectedOutput, Mode=TwoWay}" DisplayMemberPath="Name"
+                                      ToolTip="The real output: the device your speakers, headphones or DAC are connected to."/>
+                        </DockPanel>
+                        <CheckBox Content="Route Windows audio automatically" IsChecked="{Binding AutoSwitch}" Margin="0,10,0,0"
+                                  ToolTip="While Power is on, Radiqualiser makes the virtual cable the Windows default playback device, and hands it back to your normal output when switched off or closed. Untick to manage the default device yourself."/>
+                        <CheckBox Content="Link the Windows volume control" IsChecked="{Binding FollowVolume}" Margin="0,6,0,0"
+                                  ToolTip="While Radiqualiser is on, the Windows volume slider and keys act on the virtual cable, which ignores them. With this ticked, Radiqualiser copies the slider (and mute) onto your real output device, so volume behaves exactly as it did before. Volume is applied after the valve stage, so the valve sound does not change with listening level."/>
+                        <CheckBox Content="Low-latency mode" IsChecked="{Binding LowLatency}" Margin="0,6,0,0"
+                                  ToolTip="Uses Windows' small-buffer mode to keep the delay short (matters for video and games). Untick if you hear crackles."/>
+                        <CheckBox Content="Start with Windows (in the tray)" IsChecked="{Binding StartWithWindows}" Margin="0,6,0,0"/>
+                        <DockPanel Margin="0,8,0,0" ToolTip="Audio held in reserve against timing hiccups. Lower = less delay. Raise it if you hear dropouts.">
+                            <TextBlock DockPanel.Dock="Left" Text="Safety buffer" Width="82" Style="{StaticResource Dim}"/>
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding SafetyText}" Style="{StaticResource ValueText}" Width="46"/>
+                            <Slider Minimum="5" Maximum="120" Value="{Binding SafetyMs}" Tag="20" SmallChange="1" LargeChange="5" Foreground="{StaticResource Cool}"/>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- effects -->
+            <Grid Grid.Row="4" Margin="0,10,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource Card}" Padding="12,10">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,6" LastChildFill="False">
+                            <TextBlock DockPanel.Dock="Left" Text="Soften" Style="{StaticResource Heading}"/>
+                            <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding SoftenOn}" Content="On" Height="24" MinWidth="58"/>
+                        </DockPanel>
+                        <StackPanel IsEnabled="{Binding SoftenOn}">
+                            <DockPanel ToolTip="Rounds off the leading edge of drum hits, plucked strings and hard consonants, for a more relaxed feel. The body of each note is untouched. Too much sounds dull and distant.">
+                                <TextBlock DockPanel.Dock="Left" Text="Transients" Width="66"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding TransientText}" Style="{StaticResource ValueText}" Width="52"/>
+                                <Slider Minimum="0" Maximum="100" Value="{Binding Transient}" Tag="30"/>
+                            </DockPanel>
+                            <DockPanel Margin="0,2,0,0" ToolTip="Turns the upper mids down only while they are too prominent (shouty vocals, splashy cymbals, sibilance) and lets them back up straight after. Quiet detail in the same range is left alone. The bar underneath shows it working.">
+                                <TextBlock DockPanel.Dock="Left" Text="De-harsh" Width="66"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding DeharshText}" Style="{StaticResource ValueText}" Width="52"/>
+                                <Slider Minimum="0" Maximum="100" Value="{Binding Deharsh}" Tag="40"/>
+                            </DockPanel>
+                            <DockPanel Margin="0,2,0,0" ToolTip="Where the de-harsh listens: about 3.5 kHz for shouty, glaring sound; 6–8 kHz for sibilance and cymbal splash.">
+                                <TextBlock DockPanel.Dock="Left" Text="Focus" Width="66"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding DeharshHzText}" Style="{StaticResource ValueText}" Width="52"/>
+                                <Slider Minimum="1500" Maximum="8000" Value="{Binding DeharshHz}" Tag="3500" SmallChange="100" LargeChange="500"/>
+                            </DockPanel>
+                            <c:MeterBar Height="4" Margin="0,6,0,0" Value="{Binding DeharshDb}" Minimum="0" Maximum="12" Fill="{StaticResource Cool}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource Card}" Padding="12,10">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,6" LastChildFill="False">
+                            <TextBlock DockPanel.Dock="Left" Text="Tape" Style="{StaticResource Heading}"/>
+                            <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding TapeOn}" Content="On" Height="24" MinWidth="58"/>
+                        </DockPanel>
+                        <StackPanel IsEnabled="{Binding TapeOn}">
+                            <DockPanel ToolTip="How hard the tape is hit. Tape saturates gently and evenly (it thickens and rounds the loudest moments) without the octave-up colour of the valve stage. 0 is clean, 20–45% is a well-run studio machine, above 70% is tape pushed hard.">
+                                <TextBlock DockPanel.Dock="Left" Text="Drive" Width="66"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding TapeDriveText}" Style="{StaticResource ValueText}" Width="52"/>
+                                <Slider Minimum="0" Maximum="100" Value="{Binding TapeDrive}" Tag="35"/>
+                            </DockPanel>
+                            <DockPanel Margin="0,2,0,0" ToolTip="A separate control: it works whatever Drive is set to, including 0. Tape runs out of room in the treble first, so loud, bright sounds (cymbal crashes, 's' sounds, brass) are squashed while quiet treble stays exactly as it was. Around 25% takes the edge off the loudest cymbals and sibilance; 50% softens them clearly; 100% is a blanket over the tweeters.">
+                                <TextBlock DockPanel.Dock="Left" Text="Treble" Width="66"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding TapeSquashText}" Style="{StaticResource ValueText}" Width="52"/>
+                                <Slider Minimum="0" Maximum="100" Value="{Binding TapeSquash}" Tag="50"/>
+                            </DockPanel>
+                            <DockPanel Margin="0,2,0,0" ToolTip="Wow and flutter: the pitch drifting slowly and shimmering quickly, as from a tape or turntable that does not turn perfectly steadily. Up to about 25% is a good deck (a subtle liveliness), 50% is a tired one (about ±1% in pitch), 100% is a chewed cassette (about ±4%). Most obvious on held notes such as piano.">
+                                <TextBlock DockPanel.Dock="Left" Text="Wow" Width="66"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding WowText}" Style="{StaticResource ValueText}" Width="52"/>
+                                <Slider Minimum="0" Maximum="100" Value="{Binding Wow}" Tag="0"/>
+                            </DockPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="4" Style="{StaticResource Card}" Padding="12,10">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,6" LastChildFill="False">
+                            <TextBlock DockPanel.Dock="Left" Text="Phantom bass" Style="{StaticResource Heading}"/>
+                            <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding BassOn}" Content="On" Height="24" MinWidth="58"/>
+                        </DockPanel>
+                        <StackPanel IsEnabled="{Binding BassOn}">
+                            <DockPanel ToolTip="Adds harmonics of the lowest notes. The ear rebuilds a low note from its harmonics even when the note itself is missing, so bass that your speakers cannot reproduce becomes audible an octave or two higher. This is not a bass boost: nothing extra is asked of the speakers down low.">
+                                <TextBlock DockPanel.Dock="Left" Text="Amount" Width="66"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding BassAmountText}" Style="{StaticResource ValueText}" Width="52"/>
+                                <Slider Minimum="0" Maximum="100" Value="{Binding BassAmount}" Tag="40"/>
+                            </DockPanel>
+                            <DockPanel Margin="0,2,0,0" ToolTip="Harmonics are made from everything below this frequency. Set it to roughly where your speakers start to give up: about 60 Hz for large speakers, 100–150 Hz for small ones.">
+                                <TextBlock DockPanel.Dock="Left" Text="Below" Width="66"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding BassHzText}" Style="{StaticResource ValueText}" Width="52"/>
+                                <Slider Minimum="40" Maximum="200" Value="{Binding BassHz}" Tag="90" SmallChange="5" LargeChange="20"/>
+                            </DockPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="6" Style="{StaticResource Card}" Padding="12,10">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,6" LastChildFill="False">
+                            <TextBlock DockPanel.Dock="Left" Text="Glue" Style="{StaticResource Heading}"/>
+                            <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding GlueOn}" Content="On" Height="24" MinWidth="58"/>
+                        </DockPanel>
+                        <StackPanel IsEnabled="{Binding GlueOn}">
+                            <DockPanel ToolTip="A slow, gentle compressor of the kind used across a whole mix. It leans on the loud passages and lifts the quiet ones a little, which makes the music feel denser and more of a piece. Around 20–40% is the classic subtle setting; high settings flatten the dynamics noticeably. The bar underneath shows how hard it is working.">
+                                <TextBlock DockPanel.Dock="Left" Text="Amount" Width="66"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding GlueText}" Style="{StaticResource ValueText}" Width="52"/>
+                                <Slider Minimum="0" Maximum="100" Value="{Binding Glue}" Tag="30"/>
+                            </DockPanel>
+                            <c:MeterBar Height="4" Margin="0,6,0,0" Value="{Binding GlueDb}" Minimum="0" Maximum="12" Fill="{StaticResource Cool}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="8" Style="{StaticResource Card}" Padding="12,10">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,6" LastChildFill="False">
+                            <TextBlock DockPanel.Dock="Left" Text="Cathedral" Style="{StaticResource Heading}"/>
+                            <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding SpaceOn}" Content="On" Height="24" MinWidth="58"/>
+                        </DockPanel>
+                        <StackPanel IsEnabled="{Binding SpaceOn}">
+                            <DockPanel ToolTip="How much reverberation is added around the music. The direct sound is not changed. 100% puts the echo level with the music itself.">
+                                <TextBlock DockPanel.Dock="Left" Text="Amount" Width="66"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding SpaceAmountText}" Style="{StaticResource ValueText}" Width="52"/>
+                                <Slider Minimum="0" Maximum="100" Value="{Binding SpaceAmount}" Tag="30"/>
+                            </DockPanel>
+                            <DockPanel Margin="0,2,0,0" ToolTip="How long the sound hangs in the air after a note stops: about 2 seconds for a concert hall, 4 for a church, 6–10 for a stone cathedral. The treble fades faster than the rest, as it does in a real building.">
+                                <TextBlock DockPanel.Dock="Left" Text="Decay" Width="66"/>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding SpaceDecayText}" Style="{StaticResource ValueText}" Width="52"/>
+                                <Slider Minimum="1" Maximum="12" Value="{Binding SpaceDecay}" Tag="6" SmallChange="0.5" LargeChange="1"/>
+                            </DockPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- status -->
+            <DockPanel Grid.Row="5" Margin="2,9,2,0">
+                <Ellipse x:Name="StatusDot" DockPanel.Dock="Left" Width="8" Height="8" Margin="0,1,8,0" Fill="{StaticResource Line}"/>
+                <TextBlock DockPanel.Dock="Right" Style="{StaticResource Dim}" FontSize="11.5" Margin="16,0,0,0"
+                           Text="Graph:  double-click add  ·  drag move  ·  Ctrl-click / Shift-click select several  ·  wheel / arrows fine-tune  ·  right-click options  ·  Del remove"
+                           ToolTip="Ctrl-click adds or removes single points from the selection. Shift-click selects everything between the last point you clicked and this one. Ctrl+A selects all, Esc selects none. Dragging, the wheel, the arrow keys and Del then act on all selected points together. While dragging, hold Shift to move up and down only, or Ctrl to move left and right only."/>
+                <TextBlock Text="{Binding Status}" Style="{StaticResource Dim}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+            </DockPanel>
+        </Grid>
+    </Grid>
+</Window>
