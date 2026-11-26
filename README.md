@@ -1,8 +1,6 @@
 # Radiqualiser
 
-A system-wide audio equaliser for Windows where you draw the response you want, with a valve (tube) amp stage and a
-handful of other effects you can turn up as far as you like. Everything Windows plays goes through it: music players,
-browsers, games.
+A system-wide audio, unlimited point equaliser for Windows that allows you to create exactly the response you want. Various audio effects added to play with like valve (tube) amp, soften etc. Everything Windows plays goes through it: music players, browsers, games.
 
 **An Equalizer APO alternative.** Radiqualiser does not install anything into the Windows audio driver, so it can
 work where Equalizer APO will not install or has stopped working after an update. The trade-off is that it needs a
@@ -12,15 +10,12 @@ virtual audio cable and adds about 50 ms of delay. See [Limits](#limits).
 
 ## What it does
 
-**Drawn equaliser.** Double-click the graph to add a point, drag it where you want it. The line passes exactly
-through every point, with as many points as you like, and stays flat beyond the first and last. A slider sets how the
-line travels between points, from straight segments to a smooth curve. Ctrl-click and Shift-click select several
-points to move together. The equaliser adds no delay.
+**Drawn equaliser.** Double click to add points, drag and drop, the line passes through each, add as many as you like. A slider sets how the
+line travels between points, from straight to a smooth curve. Ctrl-click and Shift-click to select multiple points, zero to reset. The equaliser adds no delay.
 
-**Frequency sweep.** A test tone that glides from 20 Hz to 20 kHz through your settings, with a marker on the graph you
-can grab and drag to any frequency. Useful for finding the note that makes the room boom.
+**Frequency sweep.** A test tone that glides from 20 Hz to 20 kHz through your settings, with selectable speed, or drag to manually move it around. Useful for finding the note that makes the room boom, or your ears bleed.
 
-**Valve stage.** A model of a valve amplifier's distortion, which is where the "warm" sound comes from:
+**Valve stage.** A model of a valve amplifier's distortion:
 
 - *Drive*: how hard the music is pushed into the valve curve, from clean through hi-fi richness to outright fuzz.
 - *Character*: push-pull (odd harmonics, tighter) through to single-ended triode (2nd harmonic, the classic warmth).
@@ -44,7 +39,7 @@ changes the tone and not the volume, and nothing clips. A limiter sits at the en
 
 ## Status
 
-Version 0.1.0. It has been built for and tested on exactly one PC (Windows 10, optical output to an external DAC),
+Version 0.1.0. It has been built for and tested on only one PC (Windows 10, optical output to an external DAC),
 where it is in daily use. The signal processing has a numeric test suite; the rest has been tested by using it. Expect
 rough edges on other hardware, and please report them.
 
