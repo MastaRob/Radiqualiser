@@ -4,8 +4,8 @@ A system-wide audio equaliser for Windows where you draw the response you want, 
 handful of other effects you can turn up as far as you like. Everything Windows plays goes through it: music players,
 browsers, games.
 
-**An Equalizer APO alternative.** Radiqualiser does not install anything into the Windows audio driver, so it keeps
-working where Equalizer APO will not install or has stopped working after an update. The trade-off is that it needs a
+**An Equalizer APO alternative.** Radiqualiser does not install anything into the Windows audio driver, so it can
+work where Equalizer APO will not install or has stopped working after an update. The trade-off is that it needs a
 virtual audio cable and adds about 50 ms of delay. See [Limits](#limits).
 
 ![Radiqualiser's main window](docs/screenshot.png)
