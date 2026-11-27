@@ -143,4 +143,4 @@ dotnet publish src/Radiqualiser/Radiqualiser.csproj -c Release -r win-x64 --self
 Radiqualiser is released under the [MIT licence](LICENSE). It uses [NAudio](https://github.com/naudio/NAudio) by Mark
 Heath for audio device access; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
-The program was designed by ear and by conversation, with [Claude Code](https://claude.com/claude-code) writing the code.
+The program was designed by ear and by conversation, with Claude Fable 5.2 writing the code.
